@@ -1,8 +1,18 @@
+import compression from 'compression';
 import express, { Request, Response } from 'express';
 
 import rainloggerRouter from './routes/rainloggerRouter';
 
 const app = express();
+
+// Middleware, modifies incoming data. For parsing JSON bodies on POST requests
+app.use(express.json({ limit: '1024kb' })); // Do not accept bodies bigger than 1 megabyte
+
+// Middleware, modifies incoming data. For parsing URL encoded forms
+app.use(express.urlencoded({ extended: false, limit: '10kb' })); // Do not accept bodies bigger than 10 kilobytes
+
+// Compress responses
+app.use(compression());
 
 // Healthcheck
 app.get('/healthcheck', (req, res) => {
@@ -12,7 +22,7 @@ app.get('/healthcheck', (req, res) => {
   });
 });
 
-app.use('api/v1/rainlogger', rainloggerRouter);
+app.use('/api/v1/rainlogger', rainloggerRouter);
 
 // Middleware for handling unhandled routes
 app.use((req: Request, res: Response) => {
