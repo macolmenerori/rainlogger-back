@@ -12,5 +12,6 @@
     "target": "ES6",
     "types": ["node"]
   },
+  "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }
