@@ -117,3 +117,58 @@ export const getRainlogFilters = catchAsync(async (req: RequestRainlog, res: Res
     }
   });
 });
+
+export const deleteRainlog = catchAsync(async (req: RequestRainlog, res: Response) => {
+  const validation = checkValidation(req, res);
+  if (validation !== undefined) {
+    return validation;
+  }
+
+  const { id } = req.params;
+  const rainlog = await RainlogModel.findById(id);
+
+  if (!rainlog) {
+    return res.status(404).json({
+      status: 'fail',
+      message: 'Rainlog not found'
+    });
+  }
+
+  await rainlog.deleteOne();
+
+  return res.status(204).send();
+});
+
+export const updateRainlog = catchAsync(async (req: RequestRainlog, res: Response) => {
+  const validation = checkValidation(req, res);
+  if (validation !== undefined) {
+    return validation;
+  }
+
+  const { _id } = req.body;
+  const rainlog = await RainlogModel.findById(_id);
+
+  if (!rainlog) {
+    return res.status(404).json({
+      status: 'fail',
+      message: 'Rainlog not found'
+    });
+  }
+
+  rainlog.date = req.body.date;
+  rainlog.measurement = req.body.measurement;
+  rainlog.realReading = req.body.realReading;
+  rainlog.location = req.body.location;
+  rainlog.timestamp = new Date();
+  rainlog.loggedBy = req.user!.email;
+
+  await rainlog.save();
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'Rainlog updated successfully',
+    data: {
+      rainlog
+    }
+  });
+});
