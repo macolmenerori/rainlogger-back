@@ -46,3 +46,27 @@ export const addRainlogToDatabase = catchAsync(async (req: RequestRainlog, res: 
     }
   });
 });
+
+export const getRainlogById = catchAsync(async (req: RequestRainlog, res: Response) => {
+  const validation = checkValidation(req, res);
+  if (validation !== undefined) {
+    return validation;
+  }
+
+  const id = req.query.id as string;
+  const rainlog = await RainlogModel.findById(id);
+
+  if (!rainlog) {
+    return res.status(404).json({
+      status: 'fail',
+      message: 'Rainlog not found'
+    });
+  }
+
+  return res.status(200).json({
+    status: 'success',
+    data: {
+      rainlog
+    }
+  });
+});

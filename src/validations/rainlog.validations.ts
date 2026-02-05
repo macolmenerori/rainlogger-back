@@ -1,4 +1,4 @@
-import { body, ValidationChain } from 'express-validator';
+import { body, query, ValidationChain } from 'express-validator';
 
 export const addRainlogValidation: ValidationChain[] = [
   body('date')
@@ -35,4 +35,13 @@ export const addRainlogValidation: ValidationChain[] = [
     .bail()
     .isLength({ min: 1 })
     .withMessage('Location cannot be empty')
+];
+
+export const getRainlogByIdValidation: ValidationChain[] = [
+  query('id')
+    .exists()
+    .withMessage('ID is required')
+    .bail()
+    .isMongoId()
+    .withMessage('ID must be a valid MongoDB ObjectId')
 ];

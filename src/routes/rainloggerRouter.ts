@@ -1,9 +1,9 @@
 import express from 'express';
 
 import { protect } from '../controllers/authControllers';
-import { addRainlogToDatabase } from '../controllers/rainlogControllers';
+import { addRainlogToDatabase, getRainlogById } from '../controllers/rainlogControllers';
 import { methodNotAllowed } from '../utils/methodNotAllowed';
-import { addRainlogValidation } from '../validations/rainlog.validations';
+import { addRainlogValidation, getRainlogByIdValidation } from '../validations/rainlog.validations';
 
 const router = express.Router();
 
@@ -11,6 +11,7 @@ router
 
   .route('/rainlog')
   .post(protect, addRainlogValidation, addRainlogToDatabase)
-  .all(methodNotAllowed(['POST']));
+  .get(protect, getRainlogByIdValidation, getRainlogById)
+  .all(methodNotAllowed(['POST', 'GET']));
 
 export default router;
