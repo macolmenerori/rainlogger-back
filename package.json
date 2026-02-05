@@ -2,7 +2,7 @@
   "name": "rainlogger-back",
   "version": "1.0.0",
   "description": "Backend of rainlogger service",
-  "main": "app.ts",
+  "main": "dist/server.js",
   "author": "macolmenerori",
   "repository": {
     "type": "git",
@@ -21,7 +21,9 @@
     "lint": "eslint --fix .",
     "types": "tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "verify": "pnpm audit --prod && pnpm lint && pnpm prettify && pnpm types && pnpm build"
+    "verify": "pnpm audit --prod && pnpm lint && pnpm prettify && pnpm types && pnpm build",
+    "generate:openapi": "ts-node scripts/generateOpenapi.ts",
+    "generate:openapi:json": "ts-node scripts/generateOpenapi.ts --json"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
@@ -29,6 +31,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.2.0",
+    "@types/swagger-jsdoc": "^6.0.4",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
@@ -48,6 +51,8 @@
     "express-rate-limit": "^8.2.1",
     "express-validator": "^7.3.1",
     "helmet": "^8.1.0",
-    "mongoose": "^9.1.5"
+    "mongoose": "^9.1.5",
+    "swagger-jsdoc": "^6.2.8",
+    "yaml": "^2.8.2"
   }
 }
