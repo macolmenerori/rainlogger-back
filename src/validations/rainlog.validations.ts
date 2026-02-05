@@ -14,8 +14,11 @@ export const addRainlogValidation: ValidationChain[] = [
     .exists()
     .withMessage('Measurement is required')
     .bail()
-    .isFloat({ min: 0 })
-    .withMessage('Measurement must be a positive number')
+    .isFloat()
+    .withMessage('Measurement must be a number')
+    .bail()
+    .custom((value) => parseFloat(value) >= 0)
+    .withMessage('Measurement must be zero or greater')
     .bail()
     .toFloat(),
   body('realReading')
