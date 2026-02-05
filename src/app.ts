@@ -1,3 +1,4 @@
+import expressMongoSanitize from '@exortek/express-mongo-sanitize';
 import compression from 'compression';
 import cors from 'cors';
 import express, { Request, Response } from 'express';
@@ -48,6 +49,9 @@ app.use(express.json({ limit: '1024kb' })); // Do not accept bodies bigger than 
 
 // Middleware, modifies incoming data. For parsing URL encoded forms
 app.use(express.urlencoded({ extended: false, limit: '10kb' })); // Do not accept bodies bigger than 10 kilobytes
+
+// Data sanitization against NoSQL query injection
+app.use(expressMongoSanitize({ replaceWith: '_' }));
 
 // Compress responses
 app.use(compression());

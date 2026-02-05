@@ -46,9 +46,11 @@ src/
     rainlog.validations.ts    # express-validator chains for rainlog POST/PUT body, GET query params, and DELETE path param
   utils/
     catchAsync.ts             # Wrapper for async route handlers — catches rejections, returns 500
+    checkEnvVars.ts           # Validates all required env vars at startup — exits with code 1 if any are missing
     methodNotAllowed.ts       # Middleware factory — returns 405 for disallowed HTTP methods
     consts.ts                 # Shared types (HTTPMethod)
 dist/                         # Compiled JS output (gitignored)
+config.env.example            # Template listing all required env vars (no secrets)
 eslint.config.mjs             # ESLint flat config
 .prettierrc                   # Prettier options
 .prettierignore               # Prettier ignore rules
@@ -59,8 +61,8 @@ package.json                  # Dependencies, scripts, engine constraints
 
 ## Architecture notes
 
-- **Entry point:** `src/server.ts`. It loads `config.env` via `dotenv`, connects Mongoose to MongoDB, then starts the Express server. The `start` script runs the compiled equivalent (`dist/server.js`).
-- **App / routing:** `src/app.ts` creates the Express app. It registers body-parsing (`express.json`, `express.urlencoded`) and `compression` middleware, exposes a `/healthcheck` GET endpoint, and mounts `rainloggerRouter` at `/api/v1/rainlogger`. A catch-all 404 handler is registered last.
+- **Entry point:** `src/server.ts`. It loads `config.env` via `dotenv`, runs `checkEnvVars()` to verify all required env vars are present (exits with code 1 if not), connects Mongoose to MongoDB, then starts the Express server. The `start` script runs the compiled equivalent (`dist/server.js`).
+- **App / routing:** `src/app.ts` creates the Express app. Security middleware is registered first: `cors` (origin whitelist driven by `CORS_WHITELIST`), `helmet` (security HTTP headers, CSP disabled), and `express-rate-limit` (applied to `/api` routes, configurable via `RATELIMIT_MAXCONNECTIONS` and `RATELIMIT_WINDOWMS`). Body-parsing (`express.json`, `express.urlencoded`), `express-mongo-sanitize` (NoSQL injection protection), and `compression` middleware follow. A `/healthcheck` GET endpoint is exposed, and `rainloggerRouter` is mounted at `/api/v1/rainlogger`. A catch-all 404 handler is registered last.
 - **Router:** `src/routes/rainloggerRouter.ts` defines the `/rainlog`, `/rainlog/filters`, and `/rainlog/delete/:id` routes. `/rainlog` supports `POST` (create), `GET` (fetch by ID via `?id=`), and `PUT` (full update — body must include `_id` plus all fields; `timestamp` and `loggedBy` are re-stamped server-side). `/rainlog/filters` supports `GET` with query-param filters (`date`, `dateFrom`, `dateTo`, `realReading`, `location`, `loggedBy`). `/rainlog/delete/:id` supports `DELETE` (removes the rainlog with the given ID; returns 204 No Content). Non-allowed methods are rejected with a 405 via the `methodNotAllowed` utility.
 - **Auth:** Routes that require authentication use the `protect` middleware (`src/controllers/authControllers.ts`). It extracts a Bearer token from the `Authorization` header and validates it against an external auth service at `AUTH_URL`. On success it attaches the user object to the request as `req.user`.
 - **Validation:** Input validation is handled by `express-validator` chains defined in `src/validations/`. Chains are passed directly as middleware in the route definition. The controller calls `checkValidation()` to short-circuit with a 400 if any chain failed.
@@ -70,18 +72,20 @@ package.json                  # Dependencies, scripts, engine constraints
 
 ## Environment variables
 
-Loaded from `config.env` (gitignored). Required variables:
+Loaded from `config.env` (gitignored). A template is provided in `config.env.example`. All variables below are validated by `checkEnvVars()` at startup — the server exits with code 1 if any are missing.
 
 | Variable | Description |
 |---|---|
-| `DATABASE` | MongoDB connection string (required — server exits if missing) |
-| `AUTH_URL` | Base URL of the external auth service (required — used by `protect` middleware to validate Bearer tokens) |
-| `PORT` | HTTP port (defaults to `8080` if unset) |
+| `NODE_ENV` | Environment name (e.g. `development`, `production`) |
+| `PORT` | HTTP port |
+| `DATABASE` | MongoDB connection string |
+| `AUTH_URL` | Base URL of the external auth service (used by `protect` middleware to validate Bearer tokens) |
+| `RATELIMIT_MAXCONNECTIONS` | Maximum number of requests allowed per window (applied to `/api` routes) |
+| `RATELIMIT_WINDOWMS` | Rate-limit window duration in milliseconds |
+| `CORS_WHITELIST` | Comma-separated list of allowed origins for CORS |
 
 ## Still to do
 
 - Add a test runner (Vitest or Jest) and wire it into `package.json`.
 - Update `"main"` in `package.json` (currently `app.ts`) to `dist/server.js` to match the actual entry point.
-- Create a `config.env.example` listing required env vars without values.
-- Add startup validation for `AUTH_URL` in `server.ts` (same pattern as `DATABASE`).
 - Fix `mongoose.model<RainlogType>` in `rainlogModel.ts` — the generic should be `Rainlog` (the plain type), not `RainlogType` (`HydratedDocument<Rainlog>`); Mongoose adds the hydration wrapper itself.
