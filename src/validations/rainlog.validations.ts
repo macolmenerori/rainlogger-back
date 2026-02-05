@@ -46,6 +46,16 @@ export const getRainlogByIdValidation: ValidationChain[] = [
     .withMessage('ID must be a valid MongoDB ObjectId')
 ];
 
+export const updateRainlogValidation: ValidationChain[] = [
+  ...addRainlogValidation,
+  body('_id')
+    .exists()
+    .withMessage('_id is required')
+    .bail()
+    .isMongoId()
+    .withMessage('_id must be a valid MongoDB ObjectId')
+];
+
 export const getRainlogFiltersValidation: ValidationChain[] = [
   query('date')
     .optional()

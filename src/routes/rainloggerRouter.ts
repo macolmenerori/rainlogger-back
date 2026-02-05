@@ -4,13 +4,15 @@ import { protect } from '../controllers/authControllers';
 import {
   addRainlogToDatabase,
   getRainlogById,
-  getRainlogFilters
+  getRainlogFilters,
+  updateRainlog
 } from '../controllers/rainlogControllers';
 import { methodNotAllowed } from '../utils/methodNotAllowed';
 import {
   addRainlogValidation,
   getRainlogByIdValidation,
-  getRainlogFiltersValidation
+  getRainlogFiltersValidation,
+  updateRainlogValidation
 } from '../validations/rainlog.validations';
 
 const router = express.Router();
@@ -19,13 +21,8 @@ router
   .route('/rainlog')
   .post(protect, addRainlogValidation, addRainlogToDatabase)
   .get(protect, getRainlogByIdValidation, getRainlogById)
-  .all(methodNotAllowed(['POST', 'GET']));
-
-router
-  .route('/rainlog')
-  .post(protect, addRainlogValidation, addRainlogToDatabase)
-  .get(protect, getRainlogByIdValidation, getRainlogById)
-  .all(methodNotAllowed(['POST', 'GET']));
+  .put(protect, updateRainlogValidation, updateRainlog)
+  .all(methodNotAllowed(['POST', 'GET', 'PUT']));
 
 router
   .route('/rainlog/filters')
