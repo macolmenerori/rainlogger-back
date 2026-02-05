@@ -1,6 +1,153 @@
 import express from 'express';
 
 import { protect } from '../controllers/authControllers';
+/**
+ * @openapi
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *       description: JWT token obtained from the authentication service
+ *   schemas:
+ *     Rainlog:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: MongoDB ObjectId
+ *           example: "507f1f77bcf86cd799439011"
+ *         date:
+ *           type: string
+ *           format: date-time
+ *           description: The date of the rainfall measurement
+ *           example: "2026-02-04T00:00:00.000Z"
+ *         measurement:
+ *           type: number
+ *           minimum: 0
+ *           description: The rainfall measurement in millimeters
+ *           example: 12.5
+ *         realReading:
+ *           type: boolean
+ *           description: Whether this is an actual reading or an estimate
+ *           example: true
+ *         location:
+ *           type: string
+ *           description: The location where the measurement was taken
+ *           example: "Garden"
+ *         timestamp:
+ *           type: string
+ *           format: date-time
+ *           description: When the record was created/updated (set by server)
+ *           example: "2026-02-05T10:30:00.000Z"
+ *         loggedBy:
+ *           type: string
+ *           description: Email of the user who logged this entry
+ *           example: "user@example.com"
+ *         records:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Optional array of record identifiers
+ *           example: []
+ *     RainlogInput:
+ *       type: object
+ *       required:
+ *         - date
+ *         - measurement
+ *         - realReading
+ *         - location
+ *       properties:
+ *         date:
+ *           type: string
+ *           format: date
+ *           description: The date of the rainfall measurement (ISO 8601)
+ *           example: "2026-02-04"
+ *         measurement:
+ *           type: number
+ *           minimum: 0
+ *           description: The rainfall measurement in millimeters
+ *           example: 12.5
+ *         realReading:
+ *           type: boolean
+ *           description: Whether this is an actual reading or an estimate
+ *           example: true
+ *         location:
+ *           type: string
+ *           description: The location where the measurement was taken
+ *           example: "Garden"
+ *     RainlogUpdateInput:
+ *       type: object
+ *       required:
+ *         - _id
+ *         - date
+ *         - measurement
+ *         - realReading
+ *         - location
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: MongoDB ObjectId of the rainlog to update
+ *           example: "507f1f77bcf86cd799439011"
+ *         date:
+ *           type: string
+ *           format: date
+ *           description: The date of the rainfall measurement (ISO 8601)
+ *           example: "2026-02-04"
+ *         measurement:
+ *           type: number
+ *           minimum: 0
+ *           description: The rainfall measurement in millimeters
+ *           example: 15.0
+ *         realReading:
+ *           type: boolean
+ *           description: Whether this is an actual reading or an estimate
+ *           example: true
+ *         location:
+ *           type: string
+ *           description: The location where the measurement was taken
+ *           example: "Garden"
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: string
+ *           enum: [fail, error]
+ *           example: "fail"
+ *         message:
+ *           type: string
+ *           example: "Error message"
+ *     ValidationErrorResponse:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: string
+ *           example: "fail"
+ *         message:
+ *           type: string
+ *           example: "Invalid input data"
+ *         errors:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 example: "field"
+ *               value:
+ *                 type: string
+ *                 example: "invalid"
+ *               msg:
+ *                 type: string
+ *                 example: "Specific validation error message"
+ *               path:
+ *                 type: string
+ *                 example: "fieldName"
+ *               location:
+ *                 type: string
+ *                 example: "body"
+ */
 import {
   addRainlogToDatabase,
   deleteRainlog,
@@ -19,6 +166,250 @@ import {
 
 const router = express.Router();
 
+/**
+ * @openapi
+ * /api/v1/rainlogger/rainlog:
+ *   post:
+ *     summary: Create a new rainlog
+ *     description: Creates a new rainfall log entry. The timestamp and loggedBy fields are automatically set by the server.
+ *     tags:
+ *       - Rainlog
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RainlogInput'
+ *           example:
+ *             date: "2026-02-04"
+ *             measurement: 12.5
+ *             realReading: true
+ *             location: "Garden"
+ *     responses:
+ *       201:
+ *         description: Rainlog created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Rainlog added successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     rainlog:
+ *                       $ref: '#/components/schemas/Rainlog'
+ *             example:
+ *               status: "success"
+ *               message: "Rainlog added successfully"
+ *               data:
+ *                 rainlog:
+ *                   _id: "507f1f77bcf86cd799439011"
+ *                   date: "2026-02-04T00:00:00.000Z"
+ *                   measurement: 12.5
+ *                   realReading: true
+ *                   location: "Garden"
+ *                   timestamp: "2026-02-05T10:30:00.000Z"
+ *                   loggedBy: "user@example.com"
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
+ *             example:
+ *               status: "fail"
+ *               message: "Invalid input data"
+ *               errors:
+ *                 - type: "field"
+ *                   value: ""
+ *                   msg: "Location is required"
+ *                   path: "location"
+ *                   location: "body"
+ *       401:
+ *         description: Unauthorized - Missing or invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               status: "fail"
+ *               message: "You are not logged in! Please log in to get access."
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               status: "error"
+ *               message: "Something went wrong. Please try again later."
+ *   get:
+ *     summary: Get a rainlog by ID
+ *     description: Retrieves a single rainlog entry by its MongoDB ObjectId.
+ *     tags:
+ *       - Rainlog
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: MongoDB ObjectId of the rainlog
+ *         example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       200:
+ *         description: Rainlog found successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     rainlog:
+ *                       $ref: '#/components/schemas/Rainlog'
+ *             example:
+ *               status: "success"
+ *               data:
+ *                 rainlog:
+ *                   _id: "507f1f77bcf86cd799439011"
+ *                   date: "2026-02-04T00:00:00.000Z"
+ *                   measurement: 12.5
+ *                   realReading: true
+ *                   location: "Garden"
+ *                   timestamp: "2026-02-05T10:30:00.000Z"
+ *                   loggedBy: "user@example.com"
+ *       400:
+ *         description: Invalid ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
+ *             example:
+ *               status: "fail"
+ *               message: "Invalid input data"
+ *               errors:
+ *                 - type: "field"
+ *                   value: "invalid-id"
+ *                   msg: "ID must be a valid MongoDB ObjectId"
+ *                   path: "id"
+ *                   location: "query"
+ *       401:
+ *         description: Unauthorized - Missing or invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               status: "fail"
+ *               message: "You are not logged in! Please log in to get access."
+ *       404:
+ *         description: Rainlog not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               status: "fail"
+ *               message: "Rainlog not found"
+ *   put:
+ *     summary: Update a rainlog
+ *     description: Updates an existing rainlog entry. All fields must be provided. The timestamp and loggedBy fields are automatically updated by the server.
+ *     tags:
+ *       - Rainlog
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RainlogUpdateInput'
+ *           example:
+ *             _id: "507f1f77bcf86cd799439011"
+ *             date: "2026-02-04"
+ *             measurement: 15.0
+ *             realReading: true
+ *             location: "Garden"
+ *     responses:
+ *       200:
+ *         description: Rainlog updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Rainlog updated successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     rainlog:
+ *                       $ref: '#/components/schemas/Rainlog'
+ *             example:
+ *               status: "success"
+ *               message: "Rainlog updated successfully"
+ *               data:
+ *                 rainlog:
+ *                   _id: "507f1f77bcf86cd799439011"
+ *                   date: "2026-02-04T00:00:00.000Z"
+ *                   measurement: 15.0
+ *                   realReading: true
+ *                   location: "Garden"
+ *                   timestamp: "2026-02-05T11:45:00.000Z"
+ *                   loggedBy: "user@example.com"
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
+ *             example:
+ *               status: "fail"
+ *               message: "Invalid input data"
+ *               errors:
+ *                 - type: "field"
+ *                   value: "invalid-id"
+ *                   msg: "_id must be a valid MongoDB ObjectId"
+ *                   path: "_id"
+ *                   location: "body"
+ *       401:
+ *         description: Unauthorized - Missing or invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               status: "fail"
+ *               message: "You are not logged in! Please log in to get access."
+ *       404:
+ *         description: Rainlog not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               status: "fail"
+ *               message: "Rainlog not found"
+ */
 router
   .route('/rainlog')
   .post(protect, addRainlogValidation, addRainlogToDatabase)
@@ -26,11 +417,183 @@ router
   .put(protect, updateRainlogValidation, updateRainlog)
   .all(methodNotAllowed(['POST', 'GET', 'PUT']));
 
+/**
+ * @openapi
+ * /api/v1/rainlogger/rainlog/filters:
+ *   get:
+ *     summary: Get rainlogs by filters
+ *     description: >
+ *       Retrieves rainlog entries matching the provided filters.
+ *       At least one filter parameter must be provided.
+ *       The `date` parameter cannot be combined with `dateFrom` or `dateTo`.
+ *     tags:
+ *       - Rainlog
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Exact date to filter by (ISO 8601). Cannot be combined with dateFrom/dateTo.
+ *         example: "2026-02-04"
+ *       - in: query
+ *         name: dateFrom
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start of date range (inclusive, ISO 8601)
+ *         example: "2026-02-01"
+ *       - in: query
+ *         name: dateTo
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End of date range (inclusive, ISO 8601)
+ *         example: "2026-02-28"
+ *       - in: query
+ *         name: realReading
+ *         schema:
+ *           type: boolean
+ *         description: Filter by real reading flag
+ *         example: true
+ *       - in: query
+ *         name: location
+ *         schema:
+ *           type: string
+ *         description: Filter by location
+ *         example: "Garden"
+ *       - in: query
+ *         name: loggedBy
+ *         schema:
+ *           type: string
+ *         description: Filter by the email of the user who logged the entry
+ *         example: "user@example.com"
+ *     responses:
+ *       200:
+ *         description: Rainlogs found successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     rainlogs:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Rainlog'
+ *             example:
+ *               status: "success"
+ *               data:
+ *                 rainlogs:
+ *                   - _id: "507f1f77bcf86cd799439011"
+ *                     date: "2026-02-04T00:00:00.000Z"
+ *                     measurement: 12.5
+ *                     realReading: true
+ *                     location: "Garden"
+ *                     timestamp: "2026-02-05T10:30:00.000Z"
+ *                     loggedBy: "user@example.com"
+ *                   - _id: "507f1f77bcf86cd799439012"
+ *                     date: "2026-02-05T00:00:00.000Z"
+ *                     measurement: 8.0
+ *                     realReading: true
+ *                     location: "Garden"
+ *                     timestamp: "2026-02-06T09:15:00.000Z"
+ *                     loggedBy: "user@example.com"
+ *       400:
+ *         description: No filters provided or validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               status: "fail"
+ *               message: "At least one filter query param must be provided"
+ *       401:
+ *         description: Unauthorized - Missing or invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               status: "fail"
+ *               message: "You are not logged in! Please log in to get access."
+ *       404:
+ *         description: No rainlogs match the filters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               status: "fail"
+ *               message: "No rainlogs found matching the provided filters"
+ */
 router
   .route('/rainlog/filters')
   .get(protect, getRainlogFiltersValidation, getRainlogFilters)
   .all(methodNotAllowed(['GET']));
 
+/**
+ * @openapi
+ * /api/v1/rainlogger/rainlog/delete/{id}:
+ *   delete:
+ *     summary: Delete a rainlog
+ *     description: Deletes a rainlog entry by its MongoDB ObjectId.
+ *     tags:
+ *       - Rainlog
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: MongoDB ObjectId of the rainlog to delete
+ *         example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       204:
+ *         description: Rainlog deleted successfully (no content returned)
+ *       400:
+ *         description: Invalid ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
+ *             example:
+ *               status: "fail"
+ *               message: "Invalid input data"
+ *               errors:
+ *                 - type: "field"
+ *                   value: "invalid-id"
+ *                   msg: "ID must be a valid MongoDB ObjectId"
+ *                   path: "id"
+ *                   location: "params"
+ *       401:
+ *         description: Unauthorized - Missing or invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               status: "fail"
+ *               message: "You are not logged in! Please log in to get access."
+ *       404:
+ *         description: Rainlog not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               status: "fail"
+ *               message: "Rainlog not found"
+ */
 router
   .route('/rainlog/delete/:id')
   .delete(protect, deleteRainlogValidation, deleteRainlog)
