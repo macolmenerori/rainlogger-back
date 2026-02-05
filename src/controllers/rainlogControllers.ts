@@ -118,6 +118,27 @@ export const getRainlogFilters = catchAsync(async (req: RequestRainlog, res: Res
   });
 });
 
+export const deleteRainlog = catchAsync(async (req: RequestRainlog, res: Response) => {
+  const validation = checkValidation(req, res);
+  if (validation !== undefined) {
+    return validation;
+  }
+
+  const { id } = req.params;
+  const rainlog = await RainlogModel.findById(id);
+
+  if (!rainlog) {
+    return res.status(404).json({
+      status: 'fail',
+      message: 'Rainlog not found'
+    });
+  }
+
+  await rainlog.deleteOne();
+
+  return res.status(204).send();
+});
+
 export const updateRainlog = catchAsync(async (req: RequestRainlog, res: Response) => {
   const validation = checkValidation(req, res);
   if (validation !== undefined) {

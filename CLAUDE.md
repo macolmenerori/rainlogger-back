@@ -43,7 +43,7 @@ src/
     rainlogTypes.ts           # TypeScript types for Rainlog (Rainlog, RainlogType)
     userTypes.ts              # TypeScript type for User (from external auth service)
   validations/
-    rainlog.validations.ts    # express-validator chains for rainlog POST/PUT body and GET query params
+    rainlog.validations.ts    # express-validator chains for rainlog POST/PUT body, GET query params, and DELETE path param
   utils/
     catchAsync.ts             # Wrapper for async route handlers — catches rejections, returns 500
     methodNotAllowed.ts       # Middleware factory — returns 405 for disallowed HTTP methods
@@ -61,7 +61,7 @@ package.json                  # Dependencies, scripts, engine constraints
 
 - **Entry point:** `src/server.ts`. It loads `config.env` via `dotenv`, connects Mongoose to MongoDB, then starts the Express server. The `start` script runs the compiled equivalent (`dist/server.js`).
 - **App / routing:** `src/app.ts` creates the Express app. It registers body-parsing (`express.json`, `express.urlencoded`) and `compression` middleware, exposes a `/healthcheck` GET endpoint, and mounts `rainloggerRouter` at `/api/v1/rainlogger`. A catch-all 404 handler is registered last.
-- **Router:** `src/routes/rainloggerRouter.ts` defines the `/rainlog` and `/rainlog/filters` routes. `/rainlog` supports `POST` (create), `GET` (fetch by ID via `?id=`), and `PUT` (full update — body must include `_id` plus all fields; `timestamp` and `loggedBy` are re-stamped server-side). `/rainlog/filters` supports `GET` with query-param filters (`date`, `dateFrom`, `dateTo`, `realReading`, `location`, `loggedBy`). Non-allowed methods are rejected with a 405 via the `methodNotAllowed` utility.
+- **Router:** `src/routes/rainloggerRouter.ts` defines the `/rainlog`, `/rainlog/filters`, and `/rainlog/delete/:id` routes. `/rainlog` supports `POST` (create), `GET` (fetch by ID via `?id=`), and `PUT` (full update — body must include `_id` plus all fields; `timestamp` and `loggedBy` are re-stamped server-side). `/rainlog/filters` supports `GET` with query-param filters (`date`, `dateFrom`, `dateTo`, `realReading`, `location`, `loggedBy`). `/rainlog/delete/:id` supports `DELETE` (removes the rainlog with the given ID; returns 204 No Content). Non-allowed methods are rejected with a 405 via the `methodNotAllowed` utility.
 - **Auth:** Routes that require authentication use the `protect` middleware (`src/controllers/authControllers.ts`). It extracts a Bearer token from the `Authorization` header and validates it against an external auth service at `AUTH_URL`. On success it attaches the user object to the request as `req.user`.
 - **Validation:** Input validation is handled by `express-validator` chains defined in `src/validations/`. Chains are passed directly as middleware in the route definition. The controller calls `checkValidation()` to short-circuit with a 400 if any chain failed.
 - **Controllers:** Route handlers live in `src/controllers/`. Async handlers are wrapped with `catchAsync` (`src/utils/catchAsync.ts`) to catch unhandled promise rejections and return a 500. Controllers construct the document explicitly (no raw `req.body` forwarding) before passing it to Mongoose.
@@ -84,5 +84,4 @@ Loaded from `config.env` (gitignored). Required variables:
 - Update `"main"` in `package.json` (currently `app.ts`) to `dist/server.js` to match the actual entry point.
 - Create a `config.env.example` listing required env vars without values.
 - Add startup validation for `AUTH_URL` in `server.ts` (same pattern as `DATABASE`).
-- Implement remaining CRUD route (DELETE) in `rainloggerRouter.ts`. GET by ID, GET with filters, and PUT are done.
 - Fix `mongoose.model<RainlogType>` in `rainlogModel.ts` — the generic should be `Rainlog` (the plain type), not `RainlogType` (`HydratedDocument<Rainlog>`); Mongoose adds the hydration wrapper itself.

@@ -1,4 +1,4 @@
-import { body, query, ValidationChain } from 'express-validator';
+import { body, param, query, ValidationChain } from 'express-validator';
 
 export const addRainlogValidation: ValidationChain[] = [
   body('date')
@@ -54,6 +54,15 @@ export const updateRainlogValidation: ValidationChain[] = [
     .bail()
     .isMongoId()
     .withMessage('_id must be a valid MongoDB ObjectId')
+];
+
+export const deleteRainlogValidation: ValidationChain[] = [
+  param('id')
+    .exists()
+    .withMessage('ID is required')
+    .bail()
+    .isMongoId()
+    .withMessage('ID must be a valid MongoDB ObjectId')
 ];
 
 export const getRainlogFiltersValidation: ValidationChain[] = [
