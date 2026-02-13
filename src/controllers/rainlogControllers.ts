@@ -29,6 +29,18 @@ export const addRainlogToDatabase = catchAsync(async (req: RequestRainlog, res: 
     return validation;
   }
 
+  const existingRainlog = await RainlogModel.findOne({
+    date: req.body.date,
+    location: req.body.location
+  });
+
+  if (existingRainlog) {
+    return res.status(409).json({
+      status: 'fail',
+      message: 'A rainlog with the same date and location already exists'
+    });
+  }
+
   const newRainLog = await RainlogModel.create({
     date: req.body.date,
     measurement: req.body.measurement,
@@ -152,6 +164,19 @@ export const updateRainlog = catchAsync(async (req: RequestRainlog, res: Respons
     return res.status(404).json({
       status: 'fail',
       message: 'Rainlog not found'
+    });
+  }
+
+  const existingRainlog = await RainlogModel.findOne({
+    date: req.body.date,
+    location: req.body.location,
+    _id: { $ne: req.body._id }
+  });
+
+  if (existingRainlog) {
+    return res.status(409).json({
+      status: 'fail',
+      message: 'A rainlog with the same date and location already exists'
     });
   }
 

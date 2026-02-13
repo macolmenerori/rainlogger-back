@@ -35,6 +35,8 @@ const rainlogSchema: Schema = new mongoose.Schema({
   }
 });
 
+rainlogSchema.index({ date: 1, location: 1 }, { unique: true });
+
 const RainlogModel = mongoose.model<RainlogType>('Rainlog', rainlogSchema);
 
 export default RainlogModel;
