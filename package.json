@@ -1,6 +1,6 @@
 {
   "name": "rainlogger-back",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Backend of rainlogger service",
   "main": "dist/server.js",
   "author": "macolmenerori",
@@ -54,5 +54,10 @@
     "mongoose": "^9.2.1",
     "swagger-jsdoc": "^6.2.8",
     "yaml": "^2.8.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "qs": "6.14.2"
+    }
   }
 }

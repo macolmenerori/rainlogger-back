@@ -242,6 +242,15 @@ const router = express.Router();
  *             example:
  *               status: "fail"
  *               message: "You are not logged in! Please log in to get access."
+ *       409:
+ *         description: A rainlog with the same date and location already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               status: "fail"
+ *               message: "A rainlog with the same date and location already exists"
  *       500:
  *         description: Internal server error
  *         content:
@@ -409,6 +418,15 @@ const router = express.Router();
  *             example:
  *               status: "fail"
  *               message: "Rainlog not found"
+ *       409:
+ *         description: A rainlog with the same date and location already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               status: "fail"
+ *               message: "A rainlog with the same date and location already exists"
  */
 router
   .route('/rainlog')

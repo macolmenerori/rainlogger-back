@@ -82,6 +82,15 @@ paths:
               example:
                 status: fail
                 message: You are not logged in! Please log in to get access.
+        "409":
+          description: A rainlog with the same date and location already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                status: fail
+                message: A rainlog with the same date and location already exists
         "500":
           description: Internal server error
           content:
@@ -250,6 +259,15 @@ paths:
               example:
                 status: fail
                 message: Rainlog not found
+        "409":
+          description: A rainlog with the same date and location already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                status: fail
+                message: A rainlog with the same date and location already exists
   /api/v1/rainlogger/rainlog/filters:
     get:
       summary: Get rainlogs by filters
