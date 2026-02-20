@@ -1,0 +1,26 @@
+FROM node:24-alpine AS base
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+ENV CI=true
+RUN corepack enable && apk add --no-cache git
+
+WORKDIR /app
+RUN git clone https://github.com/macolmenerori/rainlogger-front.git .
+
+# Generate .env with build-time URLs (browser-facing, must use localhost)
+ARG NODE_ENV=production
+ARG BASE_URL_AUTH=http://localhost:8080/api
+ARG BASE_URL_RAINLOGGER=http://localhost:8082/api
+ARG LOCATION_NAMES=Castraz,Salamanca
+RUN printf "NODE_ENV=%s\nBASE_URL_AUTH=%s\nBASE_URL_RAINLOGGER=%s\nLOCATION_NAMES=%s\n" \
+  "$NODE_ENV" "$BASE_URL_AUTH" "$BASE_URL_RAINLOGGER" "$LOCATION_NAMES" > .env
+
+FROM base AS build
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN pnpm run build
+
+FROM nginx:alpine
+COPY --from=build /app/dist/client /usr/share/nginx/html
+COPY --from=build /app/nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80

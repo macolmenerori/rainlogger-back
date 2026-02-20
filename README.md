@@ -14,18 +14,60 @@ Backend API for the [rainlogger](https://github.com/macolmenerori/rainlogger-bac
 
 ## Setup and running
 
+### Demo (whole project)
+
+A Docker Compose setup is included to run the **full stack** (MongoDB + auth service + backend + frontend) with a single command, pre-loaded with sample data.
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/macolmenerori/rainlogger-back.git
+   cd rainlogger-back/docker
+   ```
+
+2. Build and start all services:
+
+   ```bash
+   docker compose up --build
+   ```
+
+3. Open `http://localhost` and log in with:
+   - **Email:** `admin@admin.com`
+   - **Password:** `administrator`
+
+The compose stack includes:
+
+| Service            | Port  | Description                   |
+| ------------------ | ----- | ----------------------------- |
+| `rainlogger-db`    | 27017 | MongoDB with seeded demo data |
+| `opensesame-back`  | 8080  | Authentication API            |
+| `rainlogger-back`  | 8082  | RainLogger API                |
+| `rainlogger-front` | 80    | Frontend (Nginx)              |
+
+> Sample rain log entries for January 2026 at location "Castraz" are pre-loaded. To reset the data, run `docker compose down` and start again.
+
 ### With Docker
 
 The Dockerfile uses a multi-stage build: dependencies and source are compiled in an intermediate stage, and only the production `node_modules` and compiled `dist/` output are copied into the final image.
 
 Before building, make sure a `config.env` file exists at the project root (see [Configuration](#configuration) below). The image copies it in at build time.
 
+1. Set up and configure [opensesame-back](https://github.com/macolmenerori/opensesame-back) for authentication
+
+   ```bash
+   docker build -t opensesame-back:latest .
+   docker network create opensesame-network
+   docker run --network opensesame-network -p 8080:8080 --name opensesame-back opensesame-back
+   ```
+
+2. Set up and configure this project
+
 ```bash
 # Build the image
-docker build -t rainlogger-back .
+docker build -t rainlogger-back:latest .
 
 # Run it (port 8082 is exposed by the container)
-docker run -p 8082:8082 rainlogger-back
+docker run --network opensesame-network -p 8082:8082 --name rainlogger-back rainlogger-back
 ```
 
 The container includes a healthcheck that pings `/healthcheck` every 120 seconds. You can verify it manually while the container is running:
