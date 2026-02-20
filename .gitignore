@@ -6,3 +6,4 @@ dist/
 *.secrets
 .vscode/
 openapi.json
+.claude/
