@@ -9,7 +9,7 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
 
   {
-    ignores: ['node_modules/**', 'dist/**']
+    ignores: ['node_modules/**', 'dist/**', 'docker/**']
   },
 
   {
