@@ -12,7 +12,7 @@
   "engines": {
     "node": ">=24.0.0"
   },
-  "packageManager": "pnpm@10.30.3",
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "build": "npx tsc",
     "start": "node dist/server.js",
@@ -23,7 +23,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "verify": "pnpm audit --prod && pnpm lint && pnpm prettify && pnpm types && pnpm build",
     "generate:openapi": "ts-node scripts/generateOpenapi.ts",
-    "generate:openapi:json": "ts-node scripts/generateOpenapi.ts --json"
+    "generate:openapi:json": "ts-node scripts/generateOpenapi.ts --json",
+    "release": "ts-node scripts/release.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
