@@ -4,12 +4,16 @@ import path from 'path';
 import swaggerJsdoc from 'swagger-jsdoc';
 import YAML from 'yaml';
 
+const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf-8')) as {
+  version: string;
+};
+
 const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
       title: 'Rainlogger API',
-      version: '1.0.0',
+      version: pkg.version,
       description: 'API for logging rainfall measurements'
     },
     servers: [

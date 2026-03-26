@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Rainlogger API
-  version: 1.0.0
+  version: 1.0.1
   description: API for logging rainfall measurements
 servers:
   - url: /api/v1/rainlogger
