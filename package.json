@@ -55,10 +55,5 @@
     "mongoose": "^9.7.0",
     "swagger-jsdoc": "^6.3.0",
     "yaml": "^2.9.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "path-to-regexp": "8.4.2"
-    }
   }
 }
