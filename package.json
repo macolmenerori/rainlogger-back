@@ -44,7 +44,7 @@
     "typescript-eslint": "^8.72.1"
   },
   "dependencies": {
-    "@exortek/express-mongo-sanitize": "^3.0.1",
+    "@exortek/express-mongo-sanitize": "^4.0.0",
     "compression": "^1.8.2",
     "cors": "^2.8.6",
     "dotenv": "^18.0.9",
